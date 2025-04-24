@@ -1,0 +1,318 @@
+#!/bin/bash
+PlayerSign="O"
+BLUE=$'\033[0;34m'
+NC=$'\033[0m'
+echo $$ > player2pid.pid
+MODE="wait"
+usr2()
+{
+MODE="game"
+}
+sigterm()
+{
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 1 won"
+echo ""
+exit
+}
+sighup()
+{
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Draw"
+echo ""
+exit
+}
+usr1()
+{
+echo ""
+echo "Player 1 has left the game"
+echo ""
+exit
+}
+trap 'usr2' USR2
+trap 'sigterm' SIGTERM
+trap 'sighup' SIGHUP
+trap 'usr1' USR1
+
+function PrintArray {
+sed -i '2,$d' table
+for (( i=0;i<42;i++ ))
+do
+echo -n "${arr[i]} " >> table
+if (( (i + 1) % 7 == 0 ))
+then
+echo "" >> table
+fi
+done
+}
+
+function CheckWinHorizontal {
+for (( i=0;i<6;i++ ))
+do
+CheckVar=0
+for (( j=0;j<7;j++ ))
+do
+if [[ "${arr[$((j+7*i))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a horizontal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+}
+
+function CheckWinVertical {
+for (( i=0;i<7;i++ ))
+do
+CheckVar=0
+for (( j=0;j<6;j++ ))
+do
+if [[ "${arr[$((i+j*7))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a vertical line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+}
+
+function CheckWinDiagonal1 {
+for i in 21 38
+do
+CheckVar=0
+for ((j=0;j<4;j++))
+do
+if [[ "${arr[$((i-j*6))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+
+for i in 28 37
+do
+CheckVar=0
+for ((j=0;j<5;j++))
+do
+if [[ "${arr[$((i-j*6))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+
+for ((i=0;i<2;i++))
+do
+CheckVar=0
+for ((j=0;j<6;j++))
+do
+if [[ "${arr[$(((35+i)-j*6))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+}
+
+function CheckWinDiagonal2 {
+for i in 27 38
+do
+CheckVar=0
+for ((j=0;j<4;j++))
+do
+if [[ "${arr[$((i-j*8))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+
+for i in 34 39
+do
+CheckVar=0
+for ((j=0;j<5;j++))
+do
+if [[ "${arr[$((i-j*8))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+
+for ((i=0;i<2;i++))
+do
+CheckVar=0
+for ((j=0;j<6;j++))
+do
+if [[ "${arr[$(((40+i)-j*8))]}" == "[${BLUE}${PlayerSign}${NC}]" ]]
+then
+((CheckVar++))
+if [[ $CheckVar -eq 4 ]] 
+then
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+echo "Player 2 wins with a diagonal line"
+echo ""
+kill -15 $(cat player1pid.pid)
+exit
+fi
+else
+CheckVar=0
+fi
+done
+done
+}
+
+function CheckDraw {
+for i in "${arr[@]}"
+do
+if [[ "$i" == "[]" ]]
+then
+return
+fi
+done
+cat table | sed 's/\[\]/[ ]/g'
+echo "Draw"
+kill -1 $(cat player1pid.pid)
+exit
+}
+
+function PlayerMove {
+arr=($(awk 'NR>1 { for (i=1; i<=NF; i++) printf "%s ", $i }' table))
+while true
+do
+echo "Select a column for the move (1-7 or exit): "
+read move
+if [[ "$move" == "exit" ]]
+then
+kill -USR2 $(cat player1pid.pid)
+exit
+fi
+if [[ "$move" =~ ^[1-7]$ && "${arr[$((move-1))]}" != "[]" ]]
+then
+echo ""
+echo "The column is full. Choose another one"
+echo ""
+continue
+elif [[ "$move" =~ ^[1-7]$ && "${arr[$((move-1))]}" == "[]" ]]
+then
+break
+else
+echo ""
+echo "Wrong input. Try again"
+echo ""
+continue
+fi
+done
+for ((i=5;i>=0;i--))
+do
+if [[ "${arr[$((move+7*i-1))]}" == "[]" ]]
+then
+arr[$((move+7*i-1))]="[${BLUE}${PlayerSign}${NC}]"
+PrintArray
+CheckWinHorizontal
+CheckWinVertical
+CheckWinDiagonal1
+CheckWinDiagonal2
+CheckDraw
+break
+fi
+done
+}
+
+arr=($(awk 'NR>1 { for (i=1; i<=NF; i++) printf "%s ", $i }' table))
+while true
+do
+case $MODE in 
+"wait")
+sleep 0.5
+;;
+"game")
+echo ""
+cat table | sed 's/\[\]/[ ]/g'
+echo ""
+PlayerMove
+echo ""
+kill -USR1 $(cat player1pid.pid)
+echo "Waiting 1st player.."
+MODE="wait"
+;;
+esac
+done
